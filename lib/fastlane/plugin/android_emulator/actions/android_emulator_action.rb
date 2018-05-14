@@ -38,8 +38,14 @@ module Fastlane
           UI.user_error! "Please install the HAXM-Extension" unless kextstat.include?("intel")
         end
 
+        emulator_params = if params[:headless]
+          "-no-skin -no-audio -no-window"
+        else
+          ""
+        end
+
         UI.message("Starting emulator")
-        system("LC_NUMERIC=C; #{sdk_dir}/tools/emulator @#{params[:name]} > /dev/null 2>&1 &")
+        system("LC_NUMERIC=C; #{sdk_dir}/tools/emulator @#{params[:name]} #{emulator_params} > /dev/null 2>&1 &")
         sh("#{adb} -e wait-for-device")
 
         until Actions.sh("#{adb} -e shell getprop init.svc.bootanim", log: false).include? "stopped" do
@@ -104,7 +110,12 @@ module Fastlane
                                        env_name: "AVD_DEMO_MODE",
                                        description: "Set the emulator in demo mode",
                                        is_string: false,
-                                       default_value: true)
+                                       default_value: true),
+          FastlaneCore::ConfigItem.new(key: :headless,
+                                       env_name: "AVD_HEADLESS_MODE",
+                                       description: "Run the emulator headless",
+                                       is_string: false,
+                                       default_value: false)
         ]
       end
 
